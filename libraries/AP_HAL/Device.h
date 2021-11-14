@@ -120,10 +120,15 @@ public:
     }
 
     /**
-     * Wrapper function over #transfer() to write a byte to the register reg.
-     * The transfer is done by sending reg and val in that order.
-     *
-     * Return: true on a successful transfer, false on failure.
+     * @brief use to write the value into a register
+     * @details Wrapper function over function transfer(), used to write a 
+     * one-byte-long value into a register and check that again when needed 
+     * 
+     * @param reg the register's address to be written into
+     * @param val the desired value for the register, max. 1 byte
+     * @param checked true if the value need to be checked by system, 
+     * default false
+     * @return true if the writing success, false if not
      */
     bool write_register(uint8_t reg, uint8_t val, bool checked=false)
     {
@@ -162,6 +167,36 @@ public:
     {
         first_reg |= _read_flag;
         return transfer_bank(bank, &first_reg, 1, recv, recv_len);
+    }
+
+    /**
+     * @brief use to read a 16-bit-long register without using the pointer
+     * @warning this function is used specifically for binding to Lua script
+     *  
+     * and do not show if the reading success or not
+     * @param first_reg the register to be read
+     * @return the value of the to be read register
+     * */
+    uint16_t read_register16(uint8_t first_reg){
+        uint8_t result[2];
+        transfer(&first_reg,1,result,sizeof(result));
+        /* because of the big endian read/write in the sensor 
+         the ms-byte will be written in result[0] and ls-byte in result[1]*/
+        return (result[1])|(result[0]<<8);
+    }
+
+    /**
+     * @brief use to read a 8-bit-long register without using the pointer
+     * @warning this function is used specifically for binding to 
+     * Lua script and do not show if the reading success or not
+     * 
+     * @param first_reg the register to be read
+     * @return the value of the to be read register
+     * */
+    uint8_t read_register8(uint8_t first_reg){
+        uint8_t result;
+        transfer(&first_reg,1,&result,sizeof(result));
+        return result;
     }
 
     /**
@@ -364,8 +399,11 @@ public:
         return d.devid_s.devtype;
     }
 
-
-    /* set number of retries on transfers */
+    /**
+     * @brief set number of retries in data transfer
+     * 
+     * @param retries the number of retries
+     */
     virtual void set_retries(uint8_t retries) {};
 
 protected:
